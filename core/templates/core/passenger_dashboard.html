@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Passenger Dashboard - SmartCoach</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #b6e302ff, #0044a3ff);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .bg-hero {
+            background: url("{% static 'images/train_bg.jpg' %}") no-repeat center center/cover;
+            padding: 40px;
+            border-radius: 12px;
+            color: white;
+            box-shadow: inset 0 0 0 1000px rgba(0,0,0,0.4);
+        }
+
+        table {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h5 {
+                font-size: 1rem;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .card-text {
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .card-body.d-flex {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="mb-4 text-center text-black">
+        <h1 class="fw-bold">SmartCoach</h1>
+        <h5>A railway coach monitoring system for passengers to report and track defects easily.</h5>
+    </div>
+
+    {% if messages %}
+        <script>
+            {% for message in messages %}
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: '{{ message }}',
+                    confirmButtonText: 'OK'
+                });
+            {% endfor %}
+        </script>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="mb-2 mb-md-0">
+                        <h5 class="card-title mb-1">Welcome, {{ request.user.username }}</h5>
+                        <p class="mb-0"><strong>Type:</strong> Passenger</p>
+                        <p class="mb-0"><strong>Email:</strong> {{ request.user.email }}</p>
+                    </div>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-12">
+            <a href="{% url 'report_defect' %}" class="text-decoration-none">
+                <div class="card card-hover shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-primary">Report a Defect</h5>
+                        <p class="card-text text-muted">Let us know if something needs fixing.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-12">
+            <a href="{% url 'my_defects' %}" class="text-decoration-none">
+                <div class="card card-hover shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title text-success">View My Reports</h5>
+                        <p class="card-text text-muted">Check the status of your submitted defects.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {% if pending_count > 0 %}
+        <div class="alert alert-warning">
+            You have {{ pending_count }} pending defect{{ pending_count|pluralize }}.
+            <a href="{% url 'my_defects' %}" class="alert-link">Check now</a>
+        </div>
+    {% endif %}
+
+    {% if recent_defects %}
+        <div class="card mb-5">
+            <div class="card-header bg-dark text-white">
+                Recent Defect Reports
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Train</th>
+                                <th>Coach</th>
+                                <th>Defect</th>
+                                <th>Status</th>
+                                <th>Reported On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for defect in recent_defects %}
+                            <tr>
+                                <td>{{ defect.train.name }}</td>
+                                <td>{{ defect.coach.coach_number }}</td>
+                                <td>{{ defect.defect_type }}</td>
+                                <td>
+                                    {% if defect.status == 'Pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    {% elif defect.status == 'Resolved' %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% else %}
+                                        {{ defect.status }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ defect.created_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

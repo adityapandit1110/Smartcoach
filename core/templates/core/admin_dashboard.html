@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #343a40;
+        }
+        .navbar-brand, .nav-link {
+            color: #fff !important;
+        }
+        .dashboard-section {
+            margin-top: 30px;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .table th {
+            background-color: #343a40;
+            color: #fff;
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.875rem;
+        }
+        .modal-header, .modal-footer {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    {% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+      {% if 'success' in message.tags %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {% elif 'error' in message.tags %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {% elif 'warning' in message.tags %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      {% else %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+      {% endif %}
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+    <a class="navbar-brand" href="#">Welcome to Admin Dashboard</a>
+    <div>
+        <form method="POST" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    </div>
+  </div>
+</nav>
+
+<div class="container dashboard-section">
+
+    {% if pending_count > 20 %}
+    <div class="alert alert-danger">
+        🚨 Alert: {{ pending_count }} defects are still pending!
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Defect Status Overview</h5>
+                    <canvas id="statusChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Defects by Type</h5>
+                    <canvas id="typeChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-5 mt-5 text-center">
+        <button class="btn btn-success" onclick="document.getElementById('trainModal').style.display='block'">Add New Train</button>
+    </div>
+
+<!-- Add Maintenance Staff Button -->
+<div class="mb-4 text-center">
+    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addStaffModal">Add Maintenance Staff</button>
+</div>
+
+<!-- Add Maintenance Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1" aria-labelledby="addStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{% url 'add_maintenance_staff' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="addStaffModalLabel">Add Maintenance Staff</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" name="email" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Add Staff</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+    <div id="trainModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+        <div class="bg-white p-4 rounded" style="max-width:400px; margin:100px auto;">
+            <h4>Add New Train</h4>
+            <form method="POST" action="{% url 'add_train' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Train Name:</label>
+                    <input type="text" class="form-control" name="train_name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Train Number:</label>
+                    <input type="text" class="form-control" name="train_number" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Train</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('trainModal').style.display='none'">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title text-center">Train List</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for train in trains %}
+                    <tr>
+                        <td>{{ train.number }}</td>
+                        <td>{{ train.name }}</td>
+                        <td>
+                            <form method="POST" action="{% url 'delete_train' train.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-danger btn-sm ms-2" onclick="return confirm('Delete this train?')">Delete</button>
+                            </form>
+                            
+                            <button class="btn btn-success btn-sm ms-4" onclick="openCoachModal({{ train.id }}, '{{ train.name }}')">Add Coach</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <table class="table table-sm table-bordered mt-2">
+                                <thead>
+                                    <tr>
+                                        <th>Coach Number</th>
+                                        <th>Coach Type</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for coach in train.coaches.all %}
+                                    <tr>
+                                        <td>{{ coach.coach_number }}</td>
+                                        <td>{% if coach.coach_type == 'SL' %}Sleeper
+                                            {% elif coach.coach_type == '3A' %}AC 3 Tier
+                                            {% elif coach.coach_type == '2A' %}AC 2 Tier
+                                            {% elif coach.coach_type == '1A' %}AC 1 Tier
+                                            {% elif coach.coach_type == 'GEN' %}General
+                                            {% else %}{{ coach.coach_type }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <form method="POST" action="{% url 'delete_coach' coach.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button class="btn btn-danger btn-sm" onclick="return confirm('Remove coach {{ coach.coach_number }}?')">Remove</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3">No coaches added for this train.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">No trains available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Coach Modal -->
+<div class="modal fade" id="coachModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" id="coachForm">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="coachModalLabel">Add Coach</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Coach Number</label>
+            <input type="text" class="form-control" name="coach_number" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Coach Type</label>
+            <select class="form-select" name="coach_type" required>
+              <option value="SL">Sleeper</option>
+              <option value="3A">AC 3 Tier</option>
+              <option value="2A">AC 2 Tier</option>
+              <option value="1A">AC 1 Tier</option>
+              <option value="GEN">General</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Add Coach</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% if messages %}
+<script>
+  {% for message in messages %}
+  Swal.fire({ icon: 'success', title: 'Success', text: '{{ message|escapejs }}' });
+  {% endfor %}
+</script>
+{% endif %}
+
+<script>
+const coachModal = new bootstrap.Modal(document.getElementById('coachModal'));
+function openCoachModal(trainId, trainName) {
+    document.getElementById('coachModalLabel').innerText = `Add Coach to ${trainName}`;
+    document.getElementById('coachForm').action = `/add-coach/${trainId}/`;
+    document.getElementById('coachForm').reset();
+    coachModal.show();
+}
+</script>
+
+<script>
+const statusLabels = [], statusCounts = [], typeLabels = [], typeCounts = [];
+{% for item in status_counts %}
+    statusLabels.push("{{ item.status }}");
+    statusCounts.push({{ item.count }});
+{% endfor %}
+{% for item in defect_type_counts %}
+    typeLabels.push("{{ item.defect_type }}");
+    typeCounts.push({{ item.count }});
+{% endfor %}
+
+new Chart(document.getElementById('statusChart'), {
+    type: 'bar',
+    data: {
+        labels: statusLabels,
+        datasets: [{
+            label: 'Defect Status',
+            data: statusCounts,
+            backgroundColor: ['orange','green','red']
+        }]
+    }
+});
+
+new Chart(document.getElementById('typeChart'), {
+    type: 'pie',
+    data: {
+        labels: typeLabels,
+        datasets: [{
+            label: 'Defect Types',
+            data: typeCounts,
+            backgroundColor: ['#007bff','#6610f2','#fd7e14','#20c997','#e83e8c']
+        }]
+    }
+});
+</script>
+
+</body>
+</html>     
