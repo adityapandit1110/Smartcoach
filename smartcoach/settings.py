@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-^@z-u*c=^gb!@q%0*fc2n4-vwy(qb)x+uoqqeb&r^)g9_-9jcr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["smartcoach-y6q1.onrender.com"]
 
 
 # Application definition
