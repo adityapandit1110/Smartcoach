@@ -139,3 +139,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# settings.py
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.parse(
+        'postgresql://username:password@host:port/dbname',
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
