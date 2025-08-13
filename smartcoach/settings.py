@@ -144,7 +144,7 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.parse(
-        'postgresql://username:password@host:port/dbname',
+        'postgresql://smartcoach_db_user:dvjxvXUYwSJ294pCcs749Ve2UcWlk7Px@dpg-d2eekuuuk2gs73bbdatg-a.oregon-postgres.render.com/smartcoach_db',
         conn_max_age=600,
         ssl_require=True
     )
